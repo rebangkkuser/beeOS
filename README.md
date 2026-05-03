@@ -27,7 +27,7 @@ proot-distro login bee
 
 ### Uninstall beeOS
 
-proot-distro uninstall bee
+proot-distro remove bee
 
 ---
 
