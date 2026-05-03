@@ -16,6 +16,7 @@ Install the latest alpha using the `bee-install-alpha.sh` script.
 > [!NOTE]
 > beeOS only works with proot-distro, a tool that simulates Linux rootfs environments on Termux.
 > More info: https://github.com/termux/termux-app
+> For now, beeOS is only available for aarch64 devices.
 
 ---
 
