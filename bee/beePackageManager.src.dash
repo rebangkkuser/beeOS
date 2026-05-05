@@ -1,0 +1,113 @@
+#!/bin/dash
+
+SYNC_FORCE=0
+SYNC_AUTO=0
+SYNC_CLEAN=0
+SYNC_YES=0
+
+cmd="$1"
+shift 2>/dev/null
+
+sync_system() {
+    echo "[bee] syncing system..."
+
+    export DEBIAN_FRONTEND=noninteractive
+
+    apt update
+
+    if [ "$SYNC_FORCE" -eq 1 ]; then
+        echo "[bee] force mode enabled"
+        apt -o Dpkg::Options::="--force-confnew" upgrade -y
+    else
+        apt upgrade -y
+    fi
+
+    [ "$SYNC_AUTO" -eq 1 ] && apt autoremove -y
+    [ "$SYNC_CLEAN" -eq 1 ] && apt clean
+
+    echo "[bee] sync done"
+}
+
+fix_dpkg() {
+    echo "[bee] fixing dpkg..."
+
+    chmod -R u+rwX,go+rX /var/lib/dpkg 2>/dev/null
+    rm -f /var/lib/dpkg/lock*
+    rm -f /var/lib/apt/lists/lock
+
+    dpkg --configure -a
+    apt --fix-broken install -y
+
+    echo "[bee] dpkg fixed"
+}
+
+case "$cmd" in
+
+ins)
+    apt update
+    apt install -y "$@"
+    ;;
+
+uins)
+    apt remove -y "$@"
+    ;;
+
+show)
+    apt show "$@"
+    ;;
+
+update)
+    apt update
+    ;;
+
+upgrade)
+    apt upgrade -y
+    ;;
+
+sync)
+    for arg in "$@"; do
+        case "$arg" in
+            -f) SYNC_FORCE=1 ;;
+            -a) SYNC_AUTO=1 ;;
+            -c) SYNC_CLEAN=1 ;;
+            -y) SYNC_YES=1 ;;
+        esac
+    done
+    sync_system
+    ;;
+
+fix-dpkg)
+    fix_dpkg
+    ;;
+
+clean)
+    apt clean
+    ;;
+
+autoremove)
+    apt autoremove -y
+    ;;
+
+help|-h|--help|"")
+    echo "BeeOS Package Manager"
+    echo ""
+    echo "bee ins <pkg>        install"
+    echo "bee uins <pkg>       remove"
+    echo "bee show <pkg>       info"
+    echo "bee update           update repos"
+    echo "bee upgrade          upgrade system"
+    echo "bee sync [-f -a -c] full system sync"
+    echo "bee fix-dpkg         repair dpkg"
+    echo "bee clean            clean cache"
+    echo "bee autoremove       remove unused deps"
+    echo ""
+    echo "flags:"
+    echo "  -f force upgrade config overwrite"
+    echo "  -a autoremove"
+    echo "  -c clean cache"
+    ;;
+
+*)
+    echo "[bee] unknown command"
+    ;;
+esac
